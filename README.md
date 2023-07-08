@@ -10,8 +10,18 @@ Before running the code, please ensure that you have the following software/libr
 * Stata
 
 ## Instructions for Data Preparation and Analysis
-Weekly patterns of visitation information were obtained from SafeGraph, please contact SafeGraph for details: https://www.safegraph.com/
+Weekly patterns of visitation information were obtained from SafeGraph. Please get in touch with SafeGraph for details: https://www.safegraph.com/
 
-Compiled dataset for the paper has been uploaded to 
+Compiled dataset for the paper could be assessed here: 
+
+We used the following code to calculate related travel costs: . Please set up your osrm server to enable large data processing. 
+
+We used R to construct variables used in the regression:
+
+We used Stata to perform econometric analysis:
+
+Coefficients from econometric analysis has been used to calculate related consumer surplus:
+
+
 
 

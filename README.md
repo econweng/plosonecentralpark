@@ -7,7 +7,11 @@ This repository contains the code, scripts, and data required to reproduce the r
 Before running the code, please ensure that you have the following software/libraries installed:
 * R
 * R studio
-* 
+* Stata
 
 ## Instructions for Data Preparation and Analysis
+Weekly patterns of visitation information were obtained from SafeGraph, please contact SafeGraph for details: https://www.safegraph.com/
+
+Compiled dataset for the paper has been uploaded to 
+
 

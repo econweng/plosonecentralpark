@@ -1,0 +1,388 @@
+---
+title: "Calculate Travel Cost"
+author: "Weizhe Weng"
+date: "3/13/2023"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Calculate travel distance 
+
+In this section, we calculate travel distance using OpenStreetMap,a a free and open geographic database.   
+
+```{r}
+library(sf)
+library(osrm)
+library(tidyverse)
+library(dplyr)
+```
+
+Calculate travel distances (by driving, in meters) between central park and visitor home blockgroup for year 2019 and year 2020.
+
+```{r}
+options(osrm.server = "http://localhost:5000/",osrm.profile = "driving")
+getOption("osrm.server")
+
+#Year 2019
+centralp19 <- read.csv("~/Dropbox/Research/Pandemic and Recreation/Dataset/Central Park/centralpark_visit_2019.csv")
+
+centralp19<-centralp19%>%select(c(-unique_ID,-minutes,-meters))
+  
+centralp19 = centralp19 %>% mutate(unique_ID = paste(as.character(park_longitude),as.character(park_latitude),sep="_"))
+
+dest19 <- centralp19 %>% 
+  select(unique_ID,park_latitude,park_longitude) %>%
+  distinct() %>% 
+  relocate(park_latitude, .after = last_col()) 
+
+home19 <- centralp19 %>%
+  select(visitor_home_cbgs,visitor_home_latitude,visitor_home_longitude) %>%
+  distinct() %>%
+  relocate(visitor_home_latitude, .after = last_col()) %>% 
+  filter(!is.na(visitor_home_latitude))
+
+fulltd19 <- data.frame()
+
+for (n in 1:nrow(home19)){
+  singletd <- osrmTable(src = home19[n,c("visitor_home_longitude","visitor_home_latitude")],
+                        dst = dest19[,c("park_longitude","park_latitude")],measure = 'distance')
+  temp <- singletd$distances
+  temp <-  as.data.frame(temp) %>% cbind(id = row.names(temp), .)
+  fulltd19 <- rbind(fulltd19,temp)
+}
+
+fulltdl19 <- pivot_longer(fulltd19, cols = 2:33, names_to = "park_id",values_to = "driving_meters") %>%
+  mutate(id = as.numeric(id))
+
+
+#Year 2020
+centralp20 <- read.csv("~/Dropbox/Research/Pandemic and Recreation/Dataset/Central Park/centralpark_visit_2020.csv")
+
+centralp20<-centralp20%>%select(c(-unique_ID,-minutes,-meters))
+  
+centralp20 = centralp20 %>% mutate(unique_ID = paste(as.character(park_longitude),as.character(park_latitude),sep="_"))
+
+dest20 <- centralp20 %>% 
+  select(unique_ID,park_latitude,park_longitude) %>%
+  distinct() %>% 
+  relocate(park_latitude, .after = last_col()) 
+
+home20 <- centralp20 %>%
+  select(visitor_home_cbgs,visitor_home_latitude,visitor_home_longitude) %>%
+  distinct() %>%
+  relocate(visitor_home_latitude, .after = last_col()) %>% 
+  filter(!is.na(visitor_home_latitude))
+
+fulltd20 <- data.frame()
+
+for (n in 1:nrow(home20)){
+  singletd <- osrmTable(src = home20[n,c("visitor_home_longitude","visitor_home_latitude")],
+                        dst = dest20[,c("park_longitude","park_latitude")],measure = 'distance')
+  temp <- singletd$distances
+  temp <-  as.data.frame(temp) %>% cbind(id = row.names(temp), .)
+  fulltd20 <- rbind(fulltd20,temp)
+}
+
+fulltdl20 <- pivot_longer(fulltd20, cols = 2:36, names_to = "park_id",values_to = "driving_meters") %>%
+  mutate(id = as.numeric(id))
+
+centralp20 <- left_join(centralp20, fulltdl20, by = c("unique_ID" = "park_id", "visitor_home_cbgs" = "id"))
+
+
+```
+
+Calculate travel time (by driving, in minutes) between central park and visitor home blockgroup for year 2019 and year 2020.
+
+```{r}
+#year 2019
+fulltm19 <- data.frame()
+
+for (n in 1:nrow(home19)){
+  singletm <- osrmTable(src = home19[n,c("visitor_home_longitude","visitor_home_latitude")],
+                        dst = dest19[,c("park_longitude","park_latitude")])
+  temp <- singletm$duration
+  temp<- as.data.frame(temp) %>% cbind(id = row.names(temp), .)
+  fulltm19 <- rbind(fulltm19,temp)
+}
+
+fulltml19 <- pivot_longer(fulltm19, cols = 2:33,names_to = "park_id",values_to = "driving_minutes") %>%
+  mutate(id = as.numeric(id))
+
+centralp19 <- left_join(centralp19, fulltml19, by = c("unique_ID" = "park_id", "visitor_home_cbgs" = "id"))
+
+#year2020
+fulltm20 <- data.frame()
+
+for (n in 1:nrow(home20)){
+  singletm <- osrmTable(src = home20[n,c("visitor_home_longitude","visitor_home_latitude")],
+                        dst = dest20[,c("park_longitude","park_latitude")])
+  temp <- singletm$duration
+  temp<- as.data.frame(temp) %>% cbind(id = row.names(temp), .)
+  fulltm20 <- rbind(fulltm20,temp)
+}
+
+fulltml20 <- pivot_longer(fulltm20, cols = 2:36,names_to = "park_id",values_to = "driving_minutes") %>%
+  mutate(id = as.numeric(id))
+
+centralp20 <- left_join(centralp20, fulltml20, by = c("unique_ID" = "park_id", "visitor_home_cbgs" = "id"))
+
+```
+
+Calculate travel distances (by walking, in meters) between central park and visitor home blockgroup for year 2019 and year 2020.
+
+```{r}
+options(osrm.server = "http://localhost:5000/",osrm.profile = "foot")
+getOption("osrm.server")
+
+#Year 2019
+
+walkfulltd19 <- data.frame()
+
+for (n in 1:nrow(home19)){
+  singletd <- osrmTable(src = home19[n,c("visitor_home_longitude","visitor_home_latitude")],
+                        dst = dest19[,c("park_longitude","park_latitude")],measure = 'distance')
+  temp <- singletd$distances
+  temp <-  as.data.frame(temp) %>% cbind(id = row.names(temp), .)
+  walkfulltd19 <- rbind(walkfulltd19,temp)
+}
+
+walkfulltdl19 <- pivot_longer(walkfulltd19, cols = 2:33, names_to = "park_id",values_to = "walking_meters") %>%
+  mutate(id = as.numeric(id))
+
+centralp19 <- left_join(centralp19, walkfulltdl19, by = c("unique_ID" = "park_id", "visitor_home_cbgs" = "id"))
+
+#Year 2020
+
+walkfulltd20 <- data.frame()
+
+for (n in 1:nrow(home20)){
+  singletd <- osrmTable(src = home20[n,c("visitor_home_longitude","visitor_home_latitude")],
+                        dst = dest20[,c("park_longitude","park_latitude")],measure = 'distance')
+  temp <- singletd$distances
+  temp <-  as.data.frame(temp) %>% cbind(id = row.names(temp), .)
+  walkfulltd20 <- rbind(walkfulltd20,temp)
+}
+
+walkfulltdl20 <- pivot_longer(walkfulltd20, cols = 2:36, names_to = "park_id",values_to = "walking_meters") %>%
+  mutate(id = as.numeric(id))
+
+centralp20 <- left_join(centralp20, walkfulltdl20, by = c("unique_ID" = "park_id", "visitor_home_cbgs" = "id"))
+
+
+```
+
+Calculate travel time (by walking, in minutes) between central park and visitor home blockgroup for year 2019 and year 2020.
+
+```{r}
+#year 2019
+walkfulltm19 <- data.frame()
+
+for (n in 1:nrow(home19)){
+  singletm <- osrmTable(src = home19[n,c("visitor_home_longitude","visitor_home_latitude")],
+                        dst = dest19[,c("park_longitude","park_latitude")])
+  temp <- singletm$duration
+  temp<- as.data.frame(temp) %>% cbind(id = row.names(temp), .)
+  walkfulltm19 <- rbind(walkfulltm19,temp)
+}
+
+walkfulltml19 <- pivot_longer(walkfulltm19, cols = 2:33,names_to = "park_id",values_to = "walking_minutes") %>%
+  mutate(id = as.numeric(id))
+
+centralp19 <- left_join(centralp19, walkfulltml19, by = c("unique_ID" = "park_id", "visitor_home_cbgs" = "id"))
+
+#year2020
+walkfulltm20 <- data.frame()
+
+for (n in 1:nrow(home20)){
+  singletm <- osrmTable(src = home20[n,c("visitor_home_longitude","visitor_home_latitude")],
+                        dst = dest20[,c("park_longitude","park_latitude")])
+  temp <- singletm$duration
+  temp<- as.data.frame(temp) %>% cbind(id = row.names(temp), .)
+  walkfulltm20 <- rbind(walkfulltm20,temp)
+}
+
+walkfulltml20 <- pivot_longer(walkfulltm20, cols = 2:36,names_to = "park_id",values_to = "walking_minutes") %>%
+  mutate(id = as.numeric(id))
+
+centralp20 <- left_join(centralp20, walkfulltml20, by = c("unique_ID" = "park_id", "visitor_home_cbgs" = "id"))
+
+```
+
+Combine walking and driving mode using a threshold of 800 meter. In this case, if the walking distance is less than 800 meter, people will walk, if the walking distance is larger than 800 meter, people with drive. 
+
+```{r}
+#Select data based on walking distance
+walkd19<-walkfulltdl19%>%filter(walking_meters<800)
+walkd19$home_park_id<-paste(walkd19$id, walkd19$park_id, sep = "-")
+
+walkd20<-walkfulltdl20%>%filter(walking_meters<800)
+walkd20$home_park_id<-paste(walkd20$id, walkd20$park_id, sep = "-")
+
+#exclude data in driving mode based on id and park id
+fulltdl19$home_park_id<-paste(fulltdl19$id, fulltdl19$park_id, sep = "-")
+unique_ids19<-unique(walkd19$home_park_id)
+fulltdwl19<-fulltdl19%>%filter(!(home_park_id %in% unique_ids19))
+
+fulltdl20$home_park_id<-paste(fulltdl20$id, fulltdl20$park_id, sep = "-")
+unique_ids20<-unique(walkd20$home_park_id)
+fulltdwl20<-fulltdl20%>%filter(!(home_park_id %in% unique_ids20))
+
+```
+
+Merge travel distance and travel time
+```{r}
+#walking
+walkfulltml19$home_park_id<-paste(walkfulltml19$id, walkfulltml19$park_id, sep = "-")
+walkfulltml20$home_park_id<-paste(walkfulltml20$id, walkfulltml20$park_id, sep = "-")
+
+#driving
+fulltml19$home_park_id<-paste(fulltml19$id, fulltml19$park_id, sep = "-")
+fulltml20$home_park_id<-paste(fulltml20$id, fulltml20$park_id, sep = "-")
+
+#merge based on home_park_id
+walk_19<-left_join(walkd19,walkfulltml19,by="home_park_id")
+walk_19$mode<-"walk"
+walk_20<-left_join(walkd20,walkfulltml20,by="home_park_id")
+walk_20$mode<-"walk"
+
+drive_19<-left_join(fulltdl19,fulltml19,by="home_park_id")
+drive_19$mode<-"drive"
+drive_20<-left_join(fulltdl20,fulltml20,by="home_park_id")
+drive_20$mode<-"drive"
+
+walk_19<-walk_19%>% rename("homeid" = "id.x")%>% rename("parkid" = "park_id.x")%>% rename("travel_meters" = "walking_meters")%>% rename("travel_minutes" = "walking_minutes")
+
+walk_19<-walk_19%>%select(-c("id.y","park_id.y"))
+
+walk_20<-walk_20%>%rename("homeid" = "id.x")%>% rename("parkid" = "park_id.x")%>% rename("travel_meters" = "walking_meters")%>% rename("travel_minutes" = "walking_minutes")
+
+walk_20<-walk_20%>%select(-c("id.y","park_id.y"))
+
+drive_19<-drive_19%>% rename("homeid" = "id.x")%>% rename("parkid" = "park_id.x")%>% rename("travel_meters" = "driving_meters")%>% rename("travel_minutes" = "driving_minutes")
+
+drive_19<-drive_19%>%select(-c("id.y","park_id.y"))
+
+drive_20<-drive_20%>% rename("homeid" = "id.x")%>% rename("parkid" = "park_id.x")%>% rename("travel_meters" = "driving_meters")%>% rename("travel_minutes" = "driving_minutes")
+
+drive_20<-drive_20%>%select(-c("id.y","park_id.y"))
+
+travel_19<-rbind(walk_19,drive_19)
+
+travel_20<-rbind(walk_20,drive_20)
+
+dest19$parkid<-row.names(dest19)
+home19$homeid<-row.names(home19)
+
+travel_19<-left_join(travel_19,dest19,by="parkid")
+travel_19$homeid<-as.character(travel_19$homeid)
+travel_19<-left_join(travel_19,home19,by="homeid")
+
+dest20$parkid<-row.names(dest20)
+home20$homeid<-row.names(home20)
+
+travel_20<-left_join(travel_20,dest20,by="parkid")
+travel_20$homeid<-as.character(travel_20$homeid)
+travel_20<-left_join(travel_20,home20,by="homeid")
+
+travel_19$home_park_idn<-paste(travel_19$visitor_home_cbgs, travel_19$unique_ID, sep = "-")
+
+travel_20$home_park_idn<-paste(travel_20$visitor_home_cbgs, travel_20$unique_ID, sep = "-")
+
+centralp19$home_park_idn<-paste(centralp19$visitor_home_cbgs, centralp19$unique_ID, sep = "-")
+
+centralp20$home_park_idn<-paste(centralp20$visitor_home_cbgs, centralp20$unique_ID, sep = "-")
+
+centralp20<-centralp20%>%select(-c("placekey","parent_safegraph_place_id_original","parent_safegraph_place_id_new"))
+
+centralp20<-centralp20%>%select(-c("parent_placekey"))
+
+centralp19 <- left_join(centralp19, travel_19, by = "home_park_idn")
+
+centralp20 <- left_join(centralp20, travel_20, by = "home_park_idn")
+
+write.csv(centralp19,"/Users/wweng/Dropbox/Research/Pandemic and Recreation/Submission/PLOS ONE/R&R/Code/centralpark_visit_2019.csv")
+
+write.csv(centralp20,"/Users/wweng/Dropbox/Research/Pandemic and Recreation/Submission/PLOS ONE/R&R/Code/centralpark_visit_2020.csv")
+
+
+```
+
+Import data
+```{r}
+centralpark2019<-read.csv("/Users/wweng/Dropbox/Research/Pandemic and Recreation/Submission/PLOS ONE/R&R/Code/centralpark_visit_2019.csv")
+
+centralpark2019$year<-"2019"
+
+centralpark2020 <- read.csv("/Users/wweng/Dropbox/Research/Pandemic and Recreation/Submission/PLOS ONE/R&R/Code/centralpark_visit_2020.csv")
+
+centralpark2020$year<-"2020"
+
+centralpark2019$id.x<-NULL
+centralpark2019$park_id<-NULL
+centralpark2019$id.y<-NULL
+
+#combine data for 2019 and 2020
+
+centralpark1920<-rbind(centralpark2019,centralpark2020)
+
+# filter data within New York City
+centralpark1920$visitorNYCity<-ifelse(substr(centralpark1920$visitor_home_cbgs.x,3,5)=="005"|substr(centralpark1920$visitor_home_cbgs.x,3,5)=="081"|substr(centralpark1920$visitor_home_cbgs.x,3,5)=="085"|substr(centralpark1920$visitor_home_cbgs.x,3,5)=="061"|substr(centralpark1920$visitor_home_cbgs.x,3,5)=="047",1,0)  
+
+cp_NY<-centralpark1920%>%filter(visitorNYCity==1)
+
+cp_NY$date <- paste(cp_NY$date_range_start,cp_NY$date_range_end,cp_NY$week)
+
+```
+
+Calculate travel cost
+```{r}
+#get blockgroup level income
+#per capita income
+bgincome_2019<-get_acs(geography = "block group",variables="B19301_001",year=2019,survey="acs5",state="NY")
+
+bgincome_2020<-get_acs(geography = "block group",variables="B19301_001",year=2020,survey="acs5",state="NY")
+
+bgincome_2019<-bgincome_2019%>%rename("percapitaincome"="estimate")
+bgincome_2020<-bgincome_2020%>%rename("percapitaincome"="estimate")
+
+cp_NY_2019<-cp_NY%>%filter(year==2019)
+cp_NY_2020<-cp_NY%>%filter(year==2020)
+
+cp_NY_2019<-cp_NY_2019%>%rename("GEOID"="visitor_home_cbgs.x")
+cp_NY_2020<-cp_NY_2020%>%rename("GEOID"="visitor_home_cbgs.x")
+
+cp_NY_2019$GEOID<-as.character(cp_NY_2019$GEOID)
+cp_NY_2020$GEOID<-as.character(cp_NY_2020$GEOID)
+
+cp_NY_2019<-cp_NY_2019%>%left_join(bgincome_2019,by="GEOID")
+cp_NY_2020<-cp_NY_2020%>%left_join(bgincome_2020,by="GEOID")
+
+cp_NY1920<-rbind(cp_NY_2019,cp_NY_2020)
+
+#calculate travel cost
+#calculate driving cost based on new york city taxi fare. On average, taxi fare is $2.5 for 321.90 meters, then $0.50 for every 321.90 meters
+
+cp_NY1920$travelgroup<-ifelse(cp_NY1920$travel_meters<800.1,"0-800", ifelse(cp_NY1920$travel_meters<1600.1 & cp_NY1920$travel_meters>800,"800-1600",ifelse(cp_NY1920$travel_meters<2400.1 & cp_NY1920$travel_meters>1600,"1600-2400",ifelse(cp_NY1920$travel_meters<3200 & cp_NY1920$travel_meters>2400,"2400-3200",">3200"))))
+
+cp_NY1920$taxicost<-ifelse(cp_NY1920$travelgroup=="0-800",0,(2.5+(cp_NY1920$travel_meters-321.90)/321.90*0.5)*2)
+
+cp_NY1920$timecost<-cp_NY1920$percapitaincome/(2080*60)*cp_NY1920$travel_minutes*2 #on average, there are 2080 woring hours per year
+  
+cp_NY1920$totalcost<-cp_NY1920$taxicost+cp_NY1920$timecost
+
+#export data
+write.csv(cp_NY1920,"/Users/wweng/Dropbox/Research/Pandemic and Recreation/Submission/PLOS ONE/R&R/Code/centralpark_visit_1920.csv")
+```
+
+Summarize results by travelgroup
+```{r}
+travel_summarize<-cp_NY1920%>%
+  group_by(travelgroup,year)%>%
+  summarize(mean_cost=mean(totalcost,na.rm=TRUE),mean_taxicost=mean(taxicost,na.rm=TRUE),mean_timecost=mean(timecost,na.rm=TRUE))
+```
+
+
+

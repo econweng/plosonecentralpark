@@ -13,8 +13,8 @@ Before running the code, please ensure that you have the following software/libr
 ### Data Preparation:
 
 The weekly patterns of visitation information used in this project were obtained from SafeGraph. Please get in touch with SafeGraph for details: https://www.safegraph.com/. Compiled dataset for the paper could be assessed here: 
-* Year 2019: https://uflorida-my.sharepoint.com/:x:/g/personal/conanwwz_ufl_edu/EbFpox-qP85Jpc2NhaE-qtoBrhWqUHPP7wxUM6aeyYgvgQ?e=nfugC5
-* Year 2020: https://uflorida-my.sharepoint.com/:x:/g/personal/conanwwz_ufl_edu/EXzOJr2S65JIqNmDHsOj3LQBXgDC7q4b9wPEOycgLE5rng?e=2ddvV8
+* Year 2019: https://uflorida-my.sharepoint.com/:x:/g/personal/conanwwz_ufl_edu/EbFpox-qP85Jpc2NhaE-qtoBblkzBTVehrfeh7DXI9BSZw?e=oOaf0E
+* Year 2020: https://uflorida-my.sharepoint.com/:x:/g/personal/conanwwz_ufl_edu/EXzOJr2S65JIqNmDHsOj3LQBIdHMJyRBAu8RID4hSxQW2A?e=7u6Uwx
 
 ### Data Analysis
 
